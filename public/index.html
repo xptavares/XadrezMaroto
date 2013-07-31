@@ -1,0 +1,34 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <title>Xadrez Maroto</title>
+    <link rel="stylesheet",type="text/css" href="css/styles.css"/>
+	<link rel="stylesheet",type="text/css" href="css/chessboard-0.1.0.min.css"/>
+    <script type="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+	<script type="text/javascript" src="js/chessboard-0.1.0.min.js"></script>
+	<script type="text/javascript" src="js/xadrez.js"></script>
+  </head>
+  <body>
+    <div id="wrapper">
+      <h1>Joguinhos...</h1>
+	  <div id="board" style="width: 400px"></div>
+	  <input type="button" id="startPositionBtn" value="Start Position" />
+	  <div id="history"></div>
+    </div>
+    <script type="text/javascript">
+	$(document).ready(function() {
+        Xadrez.initialize('http://192.168.1.11/');
+      });
+	var cfg = {
+		draggable: true,
+		position: 'start',
+		onChange: function(oldPos, newPos) {	
+			Xadrez.sendPosition(ChessBoard.objToFen(newPos));
+		}
+	};
+	var board = new ChessBoard('board', cfg);
+	$('#startPositionBtn').on('click', board.start);
+    </script>
+  </body>
+</html>
