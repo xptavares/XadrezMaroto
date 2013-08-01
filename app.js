@@ -10,20 +10,17 @@ app.use("/", express.static(__dirname + '/public'));
 var position = 'start';
 
 io.sockets.on('connection', function (socket) {
-
+	
+	io.sockets.emit('newPosition', position);
+	
 	socket.on('disconnect', function () {
 		
   	});
 	
-	socket.on('changePosition', function (data) {
-		position = data.newPos;
-	});
-	
 	socket.on('move', function (data) {
+		position = data.newPos;
 		io.sockets.emit('move', data);
 	});
-	
-	io.sockets.emit('newPosition', position);
 });
 
 
