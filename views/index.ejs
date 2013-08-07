@@ -1,0 +1,27 @@
+<% layout('layout') -%>
+<% stylesheet('css/styles.css') -%>
+<% stylesheet('css/chessboard-0.1.0.min.css') -%>
+<% script('/socket.io/socket.io.js') -%>
+<% script('https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js') -%>
+<% script('js/chessboard-0.1.0.min.js') -%>
+<% script('js/chess.min.js') -%>
+<% script('js/xadrez.js') -%>
+
+<% if (!user) { %>
+	<h2>Welcome! Please log in.</h2>
+<% } else { %>
+	<h1>Joguinhos...</h1>
+	<h2>Hello, <%= user.username %>.</h2>
+	<div id="board" style="width: 400px"></div>
+	<p>Status: <span id="status"></span></p>
+	<p>FEN: <span id="fen"></span></p>
+	<p>PGN: <span id="pgn"></span></p>
+	<div id="onlines"></div>
+	<input type="button" id="startPositionBtn" value="Start Position" />
+	<script type="text/javascript">
+		$(document).ready(function() {
+			var url = 'http://localhost:3000/';
+			Xadrez.initialize(url);
+		});
+    </script>
+<% } %>
