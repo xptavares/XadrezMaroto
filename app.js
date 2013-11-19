@@ -13,6 +13,8 @@ var users = [
   , { id: 2, username: 'joe', password: 'birthday', email: 'joe@example.com', on: false }
 ];
 
+var queue = [];
+
 function findById(id, fn) {
   var idx = id - 1;
   if (users[idx]) {
@@ -31,6 +33,17 @@ function findByUsername(username, fn) {
   }
   return fn(null, null);
 };
+
+function findAllUsers(fn){
+
+  for (var i = 0, len = users.length; i < len; i++) {
+    var user = users[i];
+    if (user.on) {
+      return fn(null, user);
+    }
+  }
+  return fn(null, null);
+}
 
 // Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
@@ -109,6 +122,16 @@ app.get('/account', ensureAuthenticated, function(req, res){
 
 app.get('/login', function(req, res){
   res.render('login', { user: req.user, message: req.flash('error') });
+});
+
+app.get('/game', ensureAuthenticated, function(req, res){
+  res.render('game', { user: req.user, message: req.flash('error') });
+});
+
+app.post('/queue', function(req, res){
+  console.log(queue);
+  queue.push(req.user.id);
+  res.send(200);
 });
 
 // POST /login
