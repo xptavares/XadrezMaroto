@@ -1,18 +1,31 @@
 <% layout('layout') -%>
 <% script('http://code.jquery.com/jquery-1.9.1.js') -%>
 <% script('js/jquery.stopwatch.js') -%>
+<% script('/socket.io/socket.io.js') -%>
 
 <% if (!user) { %>
 	<h2>Welcome! Please log in.</h2>
 <% } else { %>
 	<h2>Hello, <%= user.username %>.</h2>
 	<div id="time">00:00:00</div>
-	<input type="button" id="queue" value="Start Game" />
+	<input type="button" id="queueStart" value="Start Queue" />
+	<input type="button" id="queueStop" value="Stop Queue" />
 	<script type="text/javascript">
+		var socket = io.connect('http://localhost:3000/queue');
+		socket.on('game', function (game) {
+		   console.log(game);
+	  	});
+	  	socket.on('name', function (name) {
+		   console.log(name);
+	  	});
 		$(function() {
-		  $( "#queue" ).click(function() {
+		  $( "#queueStart" ).click(function() {
 		   	$('#time').stopwatch().stopwatch('start');
-		    $.post( "/queue");
+		    socket.emit('queue', 'start');
+		  });
+		  $( "#queueStop" ).click(function() {
+		   	$('#time').stopwatch();
+		    socket.emit('queue', 'stop');
 		  });
 		});
 	</script>

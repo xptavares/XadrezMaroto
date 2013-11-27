@@ -1,11 +1,10 @@
 <% layout('layout') -%>
-<% stylesheet('css/styles.css') -%>
-<% stylesheet('css/chessboard-0.1.0.min.css') -%>
+<% stylesheet('/css/chessboard-0.1.0.min.css') -%>
 <% script('/socket.io/socket.io.js') -%>
 <% script('http://code.jquery.com/jquery-1.9.1.js') -%>
-<% script('js/chessboard-0.1.0.min.js') -%>
-<% script('js/chess.min.js') -%>
-<% script('js/xadrez.js') -%>
+<% script('/js/chessboard-0.1.0.min.js') -%>
+<% script('/js/chess.min.js') -%>
+<% script('/js/xadrez.js') -%>
 
 <h1>Joguinhos...</h1>
 <div id="board" style="width: 400px"></div>
@@ -16,7 +15,9 @@
 <input type="button" id="startPositionBtn" value="Start Position" />
 <script type="text/javascript">
 	$(document).ready(function() {
-		var url = 'http://localhost:3000/';
+		var url = 'http://localhost:3000/game';
 		Xadrez.initialize(url);
 	});
 </script>
+
+<%= game.id %>

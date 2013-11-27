@@ -1,19 +1,29 @@
-var express = require('express')
-  , passport = require('passport')
-  , flash = require('connect-flash')
-  , LocalStrategy = require('passport-local').Strategy;
+var express = require('express'), 
+    passport = require('passport'), 
+    flash = require('connect-flash'), 
+    LocalStrategy = require('passport-local').Strategy,
+    connect = require('connect'),
+    xtend = require('xtend'),
+    app = express(),
+    server = require('http').createServer(app), 
+    io = require('socket.io').listen(server), 
+    passportSocketIo = require("passport.socketio")
+    _ = require('underscore');
 
 
-var app = express()
-  , server = require('http').createServer(app)
-  , io = require('socket.io').listen(server);
+var sessionStore    = new connect.session.MemoryStore(),
+    sessionSecret  = 'asdasdsdas1312312',
+    sessionKey    = 'test-session-key',
+    sessionOptions = {
+      store:  sessionStore,
+      key:    sessionKey,
+      secret: sessionSecret
+    };
 
 var users = [
     { id: 1, username: 'bob', password: 'secret', email: 'bob@example.com', on: false }
   , { id: 2, username: 'joe', password: 'birthday', email: 'joe@example.com', on: false }
 ];
-
-var queue = [];
 
 function findById(id, fn) {
   var idx = id - 1;
@@ -98,7 +108,7 @@ app.configure(function () {
     app.use(express.logger('dev'));
     app.use(express.cookieParser());
     app.use(express.bodyParser());
-    app.use(express.session({ secret: 'keyboard cat' }));
+    app.use(express.session(sessionOptions));
     app.use(passport.initialize());
     app.use(passport.session());
     app.use(express.methodOverride());
@@ -124,14 +134,9 @@ app.get('/login', function(req, res){
   res.render('login', { user: req.user, message: req.flash('error') });
 });
 
-app.get('/game', ensureAuthenticated, function(req, res){
-  res.render('game', { user: req.user, message: req.flash('error') });
-});
-
-app.post('/queue', function(req, res){
-  console.log(queue);
-  queue.push(req.user.id);
-  res.send(200);
+app.get('/game/:id', ensureAuthenticated, function(req, res){
+   var game = _.find(games, function(val){ return val.id == req.params.id });
+   res.render('game', { user: req.user, message: req.flash('error'), game: game });
 });
 
 // POST /login
@@ -189,17 +194,71 @@ function ensureAuthenticated(req, res, next) {
 * Web Socket
 */
 var position = 'start';
+var queue = [];
+var games = [{id: 1, player1: 0, player2: 0, position: 'start'}];
 
-io.sockets.on('connection', function (socket) {
+// set authorization for socket.io
+var options = {};
+options.cookieParser = express.cookieParser;
+io.configure(function(){
+  this.set('authorization', passportSocketIo.authorize(xtend(sessionOptions, options)));
+
+  this.set('log level', 0);
+});
+
+io.of('/game').on('connection', function (socket) {
   
-  io.sockets.emit('newPosition', position);
+  socket.emit('newPosition', position);
   
   socket.on('disconnect', function () {
-    io.sockets.emit('onlines', findUsersOnline());
+    //socket.emit('onlines', findUsersOnline());
+    socket.broadcast.emit('user connected');
   });
 
   socket.on('move', function (data) {
+    console.log(data);
     position = data.newPos;
-    io.sockets.emit('move', data);
+    socket.broadcast.emit('move', data);
   });
 });
+
+io.of('/queue').on('connection', function (socket) {
+  socket.on('queue', function(data){     
+     if(data === 'start'){
+      socket.emit('game', data);
+      if (socket.handshake.user) {
+        var user_id = socket.handshake.user.id;
+        if(!_.contains(queue, user_id)){
+          console.log(queue);
+          findGame(user_id, function(err, msg){
+            if(err){
+              queue.push(user_id);
+            }
+            console.log(games);
+            console.log(msg);
+          });
+        }
+      }
+     } else {
+      socket.emit('game', data);
+     }
+  });
+});
+
+
+var findGame = function(user_id, callback){
+  if(!_.isEmpty(queue)){
+    return createGame(user_id, callback);
+  } else {
+    return callback(true, 'no Game!');
+  }
+}
+
+var createGame = function(user_id, callback){
+  var playerTwo = _.first(queue);
+  queue = _.without(queue, playerTwo);
+  var game_id = _.last(games).id + 1; 
+  var game = {id: game_id, player1: user_id, player2: playerTwo};
+  games.push(game);
+  return callback(false, 'Game Created!');
+}
